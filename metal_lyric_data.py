@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup as bs
 import pandas as pd
 import urllib2 as urllib
 import json
-import pyprind
 import re
 import random
 import time
@@ -38,10 +37,18 @@ def _read_json(url):
     '''
     Reads and parses json result from url
     '''
-    req = urllib.Request(url)
-    req.add_header('User-agent', random.choice(USER_AGENT_LIST))  # avoid rate limit
+    req = _get_urlreader(url)
     r = urllib.urlopen(req)
     return json.load(r)
+
+
+def _get_urlreader(url):
+    '''
+    Instantiates a new reader with random user agent on the given url
+    '''
+    req = urllib.Request(url)
+    req.add_header('User-agent', random.choice(USER_AGENT_LIST))  # avoid rate limit
+    return req
 
 
 def _get_link_text(html):
@@ -132,12 +139,12 @@ def _pull_json_data(request_url,
     return all_data
 
 
-def _get_lyrics(lyric_id):
+def get_lyrics(lyric_id):
     '''
     Retrieves lyrics for given id dealing with missing lyrics
     '''
     request_url = 'http://www.metal-archives.com/release/ajax-view-lyrics/id/{0:d}'
-    data = urllib.urlopen(request_url.format(lyric_id))
+    data = urllib.urlopen(_get_urlreader(request_url.format(lyric_id)))
     soup = bs(data)
     lyrics = _clean_str(soup.text)
     if lyrics == '(lyrics not available)':
